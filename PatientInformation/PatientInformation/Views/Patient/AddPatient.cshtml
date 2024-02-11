@@ -1,0 +1,240 @@
+﻿@model PatientInformation.Models.PatientViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <div class="row justify-content-center mb-3">
+        <div class="col-sm-10 text-center">
+            <a href="@Url.Action("PatientList", "Patient")" class="btn btn-secondary">Go to Patient List</a>
+        </div>
+    </div>
+    
+    <!-- Form for patient information -->
+    <form id="patientForm" method="post" asp-controller="Patient" asp-action="AddPatient">
+
+        <div class="form-group row">
+            <label for="patientName" class="col-sm-2 col-form-label">
+                Patient Name <span class="text-red text" aria-hidden="true">*</span>
+            </label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="patientName" name="PatientName">
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="diseaseId" class="col-sm-2 col-form-label">
+                Select Disease <span class="text-red text" aria-hidden="true">*</span>
+            </label>
+            <div class="col-sm-10">
+                <select class="form-control" id="diseaseId" name="DiseaseID">
+                    @foreach (var disease in Model.DiseaseList)
+                    {
+                        <option value="@disease.Value">@disease.Text</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="epilepsy" class="col-sm-2 col-form-label">
+                Epilepsy <span class="text-red text" aria-hidden="true">*</span>
+            </label>
+            <div class="col-sm-10">
+                <select class="form-control" id="epilepsy" name="Epilepsy">
+                    @foreach (var value in Enum.GetValues(typeof(PatientInformation.Models.EpilepsyStatus)))
+                    {
+                        <option value="@value">@value</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-7">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="ncd" class="col-form-label">Other NCDs</label>
+                    </div>
+                    <div class="col-md-4 ml-4">
+                        <!-- Multiselect form for selecting NCDs -->
+                        <div class="form-group">
+                            <select multiple class="form-control" id="ncd" name="NCDID" size="5">
+                                @foreach (var ncd in Model.NCDList)
+                                {
+                                    <option value="@ncd.Value">@ncd.Text</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 text-center align-self-center">
+                <!-- Add button -->
+                <div>
+                    <button type="button" class="btn btn-primary mt-4 white-background" style="color: black;background-color: white; border: 2px solid gray;" onclick="addNCD()">Add <span>&#8250;</span></button>
+                </div>
+                <div>
+                    <!-- Remove button -->
+                    <button type="button" class="btn mt-2 white-background" id="removeNCD" style="color: black;background-color: white; border: 2px solid gray;"><span>&#8249;</span> Remove</button>
+                </div>
+            </div>
+            <div class="col-md-3 right-aligned-form">
+                <!-- Form to display selected NCD values -->
+                <form id="selectedNCDsForm">
+                    <div class="form-group">
+                        <textarea class="form-control" id="selectedNCDs" rows="5" readonly></textarea>
+                    </div>
+                    <!-- Hidden input field to store selected NCD values -->
+                    <input type="hidden" id="selectedNCDsHidden" name="SelectedNCDs" />
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-7">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="allergies" class="col-form-label">Allergies</label>
+                    </div>
+                    <div class="col-md-4 ml-4">
+                        <!-- Multiselect form for selecting Allergies -->
+                        <div class="form-group">
+                            <select multiple class="form-control" id="allergies" name="AllergiesId" size="5">
+                                @foreach (var allergie in Model.AllergiesList)
+                                {
+                                    <option value="@allergie.Value">@allergie.Text</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 text-center align-self-center">
+                <!-- Add button -->
+                <div>
+                    <button type="button" class="btn btn-primary mt-4" style="color: black;background-color: white; border: 2px solid gray;" onclick="addAllergie()">Add <span>&#8250;</span></button>
+                </div>
+                <div>
+                    <!-- Remove button -->
+                    <button type="button" class="btn mt-2" style="color: black; background-color: white; border: 2px solid gray;" id="removeAllergie"><span>&#8249;</span> Remove</button>
+                </div>
+            </div>
+
+            <div class="col-md-3 right-aligned-form">
+                <!-- Form to display selected Allergies values -->
+                <form id="selectedAllergiesForm">
+                    <div class="form-group">
+                        <textarea class="form-control" id="selectedAllergies" rows="5" readonly></textarea>
+                    </div>
+                    <!-- Hidden input field to store selected Allergies values -->
+                    <input type="hidden" id="selectedAllergiesHidden" name="SelectedAllergies" />
+                </form>
+            </div>
+        </div>
+        <div class="form-group row justify-content-center">
+            <div class="col-sm-10 text-center mb-4">
+                <button type="button" class="btn btn-primary" onclick="submitForm()">Submit</button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+@section scripts {
+    <!-- Include necessary JavaScript libraries -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        // Function to add NCD
+        function addNCD() {
+            var selectedNCDs = $('#ncd option:selected').map(function () {
+                return { value: $(this).val(), text: $(this).text() };
+            }).get();
+
+            updateSelectedItems(selectedNCDs, 'selectedNCDs', 'selectedNCDsHidden');
+        }
+
+        // Function to remove last NCD
+        $('#removeNCD').on('click', function () {
+            removeLastItem('selectedNCDs', 'selectedNCDsHidden');
+        });
+
+        // Function to add Allergies
+        function addAllergie() {
+            var selectedAllergies = $('#allergies option:selected').map(function () {
+                return { value: $(this).val(), text: $(this).text() };
+            }).get();
+
+            updateSelectedItems(selectedAllergies, 'selectedAllergies', 'selectedAllergiesHidden');
+        }
+
+        // Function to remove last Allergie
+        $('#removeAllergie').on('click', function () {
+            removeLastItem('selectedAllergies', 'selectedAllergiesHidden');
+        });
+
+        // Function to update selected items textarea and hidden field
+        function updateSelectedItems(selectedItems, textareaId, hiddenFieldId) {
+            var selectedItemsDisplay = $('#' + textareaId).val();
+            var selectedItemsValues = $('#' + hiddenFieldId).val();
+
+            selectedItems.forEach(function (item) {
+                if (selectedItemsDisplay !== '') {
+                    selectedItemsDisplay += ', ';
+                    selectedItemsValues += ',';
+                }
+                selectedItemsDisplay += item.text;
+                selectedItemsValues += item.value;
+            });
+
+            $('#' + textareaId).val(selectedItemsDisplay);
+            $('#' + hiddenFieldId).val(selectedItemsValues);
+        }
+
+        // Function to remove last item from textarea and hidden field
+        function removeLastItem(textareaId, hiddenFieldId) {
+            var selectedItemsDisplay = $('#' + textareaId).val();
+            var selectedItemsValues = $('#' + hiddenFieldId).val();
+
+            var lastCommaIndex = selectedItemsDisplay.lastIndexOf(', ');
+            if (lastCommaIndex !== -1) {
+                selectedItemsDisplay = selectedItemsDisplay.substring(0, lastCommaIndex);
+                selectedItemsValues = selectedItemsValues.substring(0, selectedItemsValues.lastIndexOf(','));
+            } else {
+                selectedItemsDisplay = '';
+                selectedItemsValues = '';
+            }
+
+            $('#' + textareaId).val(selectedItemsDisplay);
+            $('#' + hiddenFieldId).val(selectedItemsValues);
+        }
+
+        // Function to submit form via AJAX
+        function submitForm() {
+            // Serialize the form data excluding the hidden fields
+            var formData = $('#patientForm').serialize();
+
+            // Get the values of the hidden fields
+            var selectedNCDs = $('#selectedNCDsHidden').val();
+            var selectedAllergies = $('#selectedAllergiesHidden').val();
+
+            // Append the values of the hidden fields to the form data
+            formData += '&SelectedNCDs=' + selectedNCDs + '&SelectedAllergies=' + selectedAllergies;
+
+            $.ajax({
+                url: '@Url.Action("AddPatient", "Patient")',
+                type: 'POST',
+                data: formData,
+                success: function (response) {
+                    
+                    alert(' submitted successfully!');
+                    window.location.reload();
+                },
+                error: function (xhr, status, error) {
+                    // Handle error response here
+                    console.error(xhr.responseText);
+                    alert('Error occurred while submitting the form: ' + xhr.responseText);
+                }
+            });
+        }
+
+    </script>
+}
